@@ -1,0 +1,27 @@
+Konfiguration S2C
+------------------
+Firmware Function Set:      804.15.4 TH
+Node Identifier             NI  S2C - 1, bzw. S2C - 2, S2C- 3, S2C - 4 
+Interface Data Rate:        BD  115200
+Packetization Timeout       RO  1       (1 ist besser als 0, da bei 0 das Paket manchmal geteilt wird, was deutlich länger dauert)
+alle anderen Parameter:     default
+
+
+
+Konfiguration SX 868
+---------------------
+Channel Mask                CM  default: 0x3EFFFDFF
+Preamble ID                 HP  0
+Network ID                  ID  7ABC
+Broadcast Multi Transmits   MT  0
+RF Data Rate                BR  80k
+Unicast Retries             RR  0
+Routing/Messaging Mode      CE  [2], Non-Routing Module
+Network Hops                NH  1
+Mesh Unicast Retries        MR  0
+Transmit Options            TO  0x80,   0x40 = Point to Point/Multipoint, 0x80 = Repeater/Directed-Broadcast, 0xC0 = DigiMesh
+Node Identifier             NI  SX 868 - 1 bzw. SX 868 - 2
+Interface Data Rate:        BD  115200
+Packetization Timeout       RO  1       (1 ist besser als 0, da bei 0 das Paket manchmal geteilt wird, was deutlich länger dauert)
+Flow Control Treshold       FT  0x1A    (Dezimal 26, ist Minimum)
+alle anderen Parameter:     default

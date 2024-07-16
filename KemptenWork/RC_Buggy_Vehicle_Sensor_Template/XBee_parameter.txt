@@ -1,0 +1,1 @@
+Siehe XBee-parameter.txt im Projekt Sender
