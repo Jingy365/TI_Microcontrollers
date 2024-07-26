@@ -2,25 +2,25 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <math.h>
+#include <stdlib.h>
 
 
 /**
  * main.c
  */
 
-volatile int16_t temp[2];
-volatile float time_diff = 0;
+volatile int32_t temp[2];
+volatile int64_t time_diff;
 volatile float distance;
 volatile int i = 0;
 char dst_char[5];
 
 void ultrasound_init(void){
-    P5DIR &= ~BIT7; //ECHO P5.7
-    P5SEL1 |= BIT7;
-    P1DIR |= BIT2 | BIT1; //TRIGGER P1.6
-    P1SEL0 |= BIT2;
-    P1SEL1 |= BIT2;
+    P1DIR |= BIT2 | BIT1; //TRIGGER P1.2
+    P1SEL1 &= ~(BIT2 | BIT4);
+    P1SEL0 |= BIT2 | BIT4;
+
+    P1DIR &= ~BIT4; //ECHO P1.4
 }
 
 
@@ -35,13 +35,13 @@ void SMCLK_init(void){
 void trigger_timer_init(void){
     TA1CTL = TASSEL__SMCLK | //SMCLK runs at 1MHz
             ID__1 |
-            //MC__CONTINUOUS |
-            MC__UP |
+            MC__CONTINUOUS |
+            //MC__UP |
             TACLR |
             TAIE_0 |
             TAIFG_0 ;
 
-    TA1CCR0 = 64000;
+    //TA1CCR0 = 64000;
 
     TA1EX0 = TAIDEX__1;
 
@@ -54,21 +54,21 @@ void trigger_timer_init(void){
 }
 
 void echo_timer_init(){
-    TA4CTL = TASSEL__SMCLK | //SMCLK runs at 1MHz
+    TB0CTL = TBSSEL__SMCLK | //SMCLK runs at 1MHz
                 ID__1 |
-               // MC__CONTINUOUS |
-                MC__UP |
-                TACLR |
-                TAIE_0 |
-                TAIFG_0 ;
+                MC__CONTINUOUS |
+                //MC__UP |
+                TBCLR |
+                TBIE_0 |
+                TBIFG_0 ;
 
-        TA4EX0 = TAIDEX__1;
+        TB0EX0 = TBIDEX__1;
 
-        TA4CCR0 = 64000;
+        //TB0CCR0 = 64000;
 
 
-        TA4CCTL1 = 0xc000 |
-                0x0800 |
+        TB0CCTL1 = CM__BOTH |
+                SCS__SYNC |
                 CAP__CAPTURE |
                 CCIE_1 |
                 CCIS__CCIA;
@@ -87,41 +87,50 @@ void main(void)
 	__enable_interrupt();
 
 	 while(1){
-	     /*
-	        distance = time_diff/58;
+	     //time_diff = temp[1] - temp[0];
+
+	     distance = abs(time_diff/58);
 	        if(distance <= 100){
 	                    P1OUT &= ~BIT1;
-	                    __delay_cycles(50);
 	                }
 	                else{
 	                    P1OUT |= BIT1;
-	                }*/
+	                }
+            __delay_cycles(5000);
 
 	 }
 }
 
-#pragma vector = TIMER4_A1_VECTOR;
+#pragma vector = TIMER0_B1_VECTOR;
 __interrupt void trigger_timer(void){
-    temp[i] = TA4R;
-    TA4CCTL1 &= ~CCIFG_1;
+    temp[i] = TB0CCR1;
+    TB0CCTL1 &= ~CCIFG_1;
     i += 1;
 
     if(i==2){
+
+
         time_diff = temp[1] - temp[0];
+        if(time_diff < 0){
+            time_diff = time_diff * -1;
+        }
         i=0;
 
+        /*
         distance = time_diff/58; //should be 270cm ish
 
 
         if(distance <= 100){
             P1OUT &= ~BIT1;
 
+
         }
         else{
             P1OUT |= BIT1;
-        }
-        __delay_cycles(5000);
 
+        }
+       // __delay_cycles(5000); //5000
+    */
     }
 
 
