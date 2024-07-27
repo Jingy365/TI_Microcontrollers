@@ -89,14 +89,14 @@ void main(void)
 	 while(1){
 	     //time_diff = temp[1] - temp[0];
 
-	     distance = abs(time_diff/58);
+	     distance = time_diff/58;
 	        if(distance <= 100){
 	                    P1OUT &= ~BIT1;
 	                }
 	                else{
 	                    P1OUT |= BIT1;
 	                }
-            __delay_cycles(5000);
+            //__delay_cycles(50);
 
 	 }
 }
@@ -110,13 +110,16 @@ __interrupt void trigger_timer(void){
     if(i==2){
 
 
-        time_diff = temp[1] - temp[0];
-        if(time_diff < 0){
-            time_diff = time_diff * -1;
+
+        if(temp[1] < temp[0]){
+            time_diff = temp[0] - temp[1];
+        }
+        else{
+            time_diff = temp[1] - temp[0];
         }
         i=0;
 
-        /*
+
         distance = time_diff/58; //should be 270cm ish
 
 
@@ -130,7 +133,7 @@ __interrupt void trigger_timer(void){
 
         }
        // __delay_cycles(5000); //5000
-    */
+
     }
 
 
