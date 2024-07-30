@@ -11,16 +11,16 @@
 
 volatile int32_t temp[2];
 volatile int64_t time_diff;
-volatile float distance;
-volatile int i = 0;
-char dst_char[5];
+volatile int distance;
+volatile int count = 0;
+char dist_char[5];
 
 void ultrasound_init(void){
     P1DIR |= BIT2 | BIT1; //TRIGGER P1.2
-    P1SEL1 &= ~(BIT2 | BIT4);
-    P1SEL0 |= BIT2 | BIT4;
+    P1SEL1 &= ~(BIT2 | BIT3);
+    P1SEL0 |= BIT2 | BIT3;
 
-    P1DIR &= ~BIT4; //ECHO P1.4
+    P1DIR &= ~BIT3; //ECHO P1.3
 }
 
 
@@ -54,24 +54,27 @@ void trigger_timer_init(void){
 }
 
 void echo_timer_init(){
-    TB0CTL = TBSSEL__SMCLK | //SMCLK runs at 1MHz
-                ID__1 |
-                MC__CONTINUOUS |
-                //MC__UP |
-                TBCLR |
-                TBIE_0 |
-                TBIFG_0 ;
 
-        TB0EX0 = TBIDEX__1;
-
-        //TB0CCR0 = 64000;
-
-
-        TB0CCTL1 = CM__BOTH |
+        TA1CCTL2 = CM__BOTH |
                 SCS__SYNC |
                 CAP__CAPTURE |
                 CCIE_1 |
                 CCIS__CCIA;
+        TA1IV = TAIV__TACCR2;
+}
+
+
+void UART_setup(void){
+    UCA1CTLW0 = UCSWRST |
+            UCSSEL__SMCLK;
+    UCA1BRW = 8;
+    UCA1MCTLW = 0xD600;
+
+    P2SEL0 &= ~BIT5;
+    P2SEL1 |= BIT5;
+
+    UCA1CTLW0 &= ~UCSWRST;
+
 }
 
 void main(void)
@@ -84,30 +87,37 @@ void main(void)
 	SMCLK_init();
 	trigger_timer_init();
 	echo_timer_init();
+	UART_setup();
 	__enable_interrupt();
 
 	 while(1){
 	     //time_diff = temp[1] - temp[0];
 
 	     distance = time_diff/58;
+
+
+	     //distance = (temp[1]*170/1000000);
+	     //ltoa(distance, dist_char, 10);
+	     //UCA1TXBUF = dist_char;
 	        if(distance <= 100){
 	                    P1OUT &= ~BIT1;
 	                }
 	                else{
 	                    P1OUT |= BIT1;
 	                }
+
             //__delay_cycles(50);
 
 	 }
 }
 
-#pragma vector = TIMER0_B1_VECTOR;
+#pragma vector = TIMER1_A1_VECTOR ;
 __interrupt void trigger_timer(void){
-    temp[i] = TB0CCR1;
-    TB0CCTL1 &= ~CCIFG_1;
-    i += 1;
+    temp[count] = TA1R;
+    TA1CCTL2 &= ~CCIFG_1;
+    count += 1;
 
-    if(i==2){
+    if(count==2){
 
 
 
@@ -117,11 +127,13 @@ __interrupt void trigger_timer(void){
         else{
             time_diff = temp[1] - temp[0];
         }
-        i=0;
+        count=0;
 
 
         distance = time_diff/58; //should be 270cm ish
-
+        //distance = (temp[1]*170/1000000);
+        //ltoa(distance, dist_char, 10);
+        //UCA1TXBUF = dist_char;
 
         if(distance <= 100){
             P1OUT &= ~BIT1;
